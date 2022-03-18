@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/magnolia"
+    android:orientation="vertical"
+    tools:context=".LocationFragment">
+
+    <Button
+        android:id="@+id/location_button"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:background="@drawable/round_button"
+        android:layout_centerInParent="true"
+        android:text="Get Location"
+        android:textColor="@color/lapis_lazuli"/>
+
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/progress_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        app:indicatorColor="@color/middle_blue"
+        app:trackColor="@color/smoky_black"
+        app:indicatorSize="158dp"
+        app:trackThickness="4dp"
+
+        android:layout_centerInParent="true"
+        android:visibility="invisible"
+        />
+
+    <TextView
+        android:id="@+id/progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_marginBottom="16dp"
+
+        android:layout_centerHorizontal="true"
+        android:layout_above="@id/location_button"
+
+        android:text="0/50"
+        android:textSize="24sp"
+        android:textColor="@color/smoky_black"
+
+
+
+        android:visibility="invisible"
+        />
+
+
+
+</RelativeLayout>

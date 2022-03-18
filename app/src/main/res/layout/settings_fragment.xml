@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/recorded_points_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+
+        android:text="Recorded Points: "
+        android:textColor="@color/smoky_black"
+        />
+
+    <SeekBar
+        android:id="@+id/recorded_points_seek_bar"
+        style="@style/Widget.AppCompat.SeekBar.Discrete"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/recorded_points_label"
+
+        android:layout_marginTop="16dp"
+        android:layout_margin="16dp"
+
+        android:max="10"
+        android:progress="0"
+        android:progressBackgroundTint="@color/smoky_black"
+        android:progressBackgroundTintMode="src_over"
+        />
+
+    <TextView
+        android:id="@+id/recorded_points_amount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_marginTop="16dp"
+        android:layout_toEndOf="@id/recorded_points_seek_bar"
+
+        android:text="1"
+        android:textColor="@color/smoky_black"
+
+        />
+
+    <TextView
+        android:id="@+id/dark_mode_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_below="@id/recorded_points_label"
+
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+
+        android:text="Dark Mode"
+
+        android:textColor="@color/smoky_black" />
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/dark_mode_switch"
+
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_below="@id/recorded_points_label"
+        android:layout_alignParentEnd="true"
+
+
+        android:layout_marginEnd="16dp"
+
+        app:trackTint="@color/lapis_lazuli" />
+
+    <Button
+        android:id="@+id/export_button"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+
+        android:layout_centerHorizontal="true"
+        android:layout_above="@id/export_all_button"
+
+        android:text="Export"
+        android:backgroundTint="@color/celeste"
+        android:textColor="@color/smoky_black"
+
+        />
+
+    <Button
+        android:id="@+id/export_all_button"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+
+        android:layout_above="@id/delete_button"
+        android:layout_centerHorizontal="true"
+
+        android:text="Export All"
+        android:backgroundTint="@color/celeste"
+        android:textColor="@color/smoky_black"
+        />
+
+    <Button
+        android:id="@+id/delete_button"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="16dp"
+
+        android:text="Delete"
+        android:backgroundTint="#FF0000"
+        android:textColor="@color/smoky_black"
+
+        />
+
+
+
+
+</RelativeLayout>
