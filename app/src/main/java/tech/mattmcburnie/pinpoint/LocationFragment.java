@@ -7,11 +7,17 @@ import android.content.pm.PackageManager;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,12 +39,18 @@ public class LocationFragment extends Fragment {
     private MainActivity activity;
     private TextView progress;
     private CircularProgressIndicator progressBar;
+    private Spinner dropdownMenu;
+    private EditText textbox;
 
     private CoordinatesDatabase db;
     private long current_point;
     private int count = 0;
     private int maxCount;
     private boolean running = false;
+    private String pointType = "";
+    private String landmark = "N/A";
+    private boolean terminate = false;
+    private boolean continuous;
 
 
 
@@ -53,10 +65,13 @@ public class LocationFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        activity = (MainActivity) getActivity();
         locationButton = view.findViewById(R.id.location_button);
         progress = view.findViewById(R.id.progress);
-        activity = (MainActivity) getActivity();
         progressBar = view.findViewById(R.id.progress_bar);
+        dropdownMenu = view.findViewById(R.id.point_type_menu);
+        textbox = view.findViewById(R.id.point_landmark_textbox);
+        continuous = activity.getMode();
 
         this.initializeListeners();
 
@@ -64,6 +79,7 @@ public class LocationFragment extends Fragment {
 
     private void initializeListeners() {
 
+        // Get Location Button
         locationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -73,27 +89,83 @@ public class LocationFragment extends Fragment {
                     current_point = db.getCurrentPoint();
                     Log.i(ACTIVITY_NAME, String.format("Current point: %d", current_point));
 
-                    count = 0;
-                    maxCount = activity.getMaxPoints();
+                    if(!continuous) {
+                        count = 0;
+                        maxCount = activity.getMaxPoints();
 
-                    progress.setText(String.format(Locale.CANADA, "%d/%d", count, maxCount));
+                        progress.setText(String.format(Locale.CANADA, "%d/%d", count, maxCount));
+
+
+                    }
+                    else {
+                        progress.setText("Running (0)");
+                        locationButton.setText("Stop");
+                    }
+
+
                     progress.setVisibility(View.VISIBLE);
                     progressBar.setVisibility(View.VISIBLE);
                     progressBar.setProgress(0, true);
 
+                    dropdownMenu.setEnabled(false);
+                    textbox.setEnabled(false);
+
 
                     new LocationFragment.Location();
                 }
+
+                else if(continuous) {
+                    terminate = true;
+                }
+
                 else {
                     Toast.makeText(activity, "Please wait for the app to finish gathering coordinates!", Toast.LENGTH_LONG).show();
                 }
 
-                running = true;
-
-
 
             }
         });
+
+        // Dropdown Menu
+        ArrayAdapter<CharSequence> pointAdapter = ArrayAdapter.createFromResource(activity, R.array.point_types, R.layout.text_resource);
+        pointAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        dropdownMenu.setAdapter(pointAdapter);
+
+        dropdownMenu.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                pointType = dropdownMenu.getItemAtPosition(i).toString();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
+        // Text Box
+        textbox.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if(charSequence.toString().equals(""))
+                    landmark = "N/A";
+                else
+                    landmark = charSequence.toString();
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
+
+
 
     }
 
@@ -114,28 +186,41 @@ public class LocationFragment extends Fragment {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 0, new LocationListener() {
                 @Override
                 public void onLocationChanged(@NonNull android.location.Location location) {
+                    running = true;
                     count++;
-                    progressBar.setProgress(count, true);
 
+                    // Get Coordinates
                     latitude = Double.parseDouble(String.valueOf(location.getLatitude()));
                     longitude = Double.parseDouble(String.valueOf(location.getLongitude()));
-                    Log.i(ACTIVITY_NAME, String.format("%s, %s", latitude, longitude));
 
-                    progress.setText(String.format(Locale.CANADA, "%d/%d", count, maxCount));
-                    progressBar.setProgress((int) (count / (double) maxCount * 100), true);
+                    // Formatting and adding to database, depending on mode.
+                    if(!continuous) {
+                        progressBar.setProgress(count, true);
+                        progress.setText(String.format(Locale.CANADA, "%d/%d", count, maxCount));
+                        progressBar.setProgress((int) (count / (double) maxCount * 100), true);
 
-                    db.addNewCoordinates(current_point, latitude, longitude);
+                        db.addNewCoordinates(current_point, latitude, longitude, pointType, landmark);
+                    }
+                    else {
+                        progress.setText(String.format(Locale.CANADA, "Running (%d)", count));
+                        db.addNewCoordinates(current_point, latitude, longitude, "Point", landmark);
+                    }
 
                     // Terminate location updates
-                    if(count == maxCount) {
+                    if((!continuous && count == maxCount) || (continuous && terminate)) {
                         locationManager.removeUpdates(this);
-
                         progress.setText("Complete!");
-
-                        double[] avg = db.getAvgCoordsAtPoint(current_point);
-
-                        Log.i(ACTIVITY_NAME, String.format("Average: %.8f, %.8f", avg[0], avg[1]));
                         running = false;
+
+                        dropdownMenu.setEnabled(true);
+                        textbox.setEnabled(true);
+
+                        if(continuous) {
+                            locationButton.setText("Get Location");
+                            progressBar.setProgress(100, true);
+                            terminate = false;
+                        }
+
 
                     }
 

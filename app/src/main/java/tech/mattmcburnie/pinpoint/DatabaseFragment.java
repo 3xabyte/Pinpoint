@@ -1,5 +1,6 @@
 package tech.mattmcburnie.pinpoint;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,6 +13,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -55,6 +57,9 @@ public class DatabaseFragment extends Fragment {
 
         long maxPoint = db.getCurrentPoint();
         double[] averageCoordinates;
+        String date;
+        String type;
+        String landmark;
 
         if(maxPoint == 1) {
             Toast.makeText(activity, "Looks like there are no points, try recording some!", Toast.LENGTH_LONG).show();
@@ -62,9 +67,11 @@ public class DatabaseFragment extends Fragment {
         else {
             ArrayList<Long> points = db.getPoints();
             for(long i : points) {
-                String date = db.getDateAtPoint(i);
+                date = db.getDateAtPoint(i);
                 averageCoordinates = db.getAvgCoordsAtPoint(i);
-                list.add(new AvgCoordinates(i, String.format(Locale.CANADA, "%.8f, %.8f", averageCoordinates[0], averageCoordinates[1]), date));
+                type = db.getPointTypeAtPoint(i);
+                landmark = db.getLandmarkAtPoint(i);
+                list.add(new AvgCoordinates(i, String.format(Locale.CANADA, "%.8f, %.8f", averageCoordinates[0], averageCoordinates[1]), date, type, landmark));
             }
 
         }
@@ -84,7 +91,34 @@ public class DatabaseFragment extends Fragment {
         lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Toast.makeText(activity, "Long press", Toast.LENGTH_SHORT).show();
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+                builder.setMessage("You are able to delete this point, are you sure you want to continue?");
+
+                builder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int o) {
+
+                        ArrayList<Long> points = db.getPoints();
+
+                        db.deletePoint(points.get(i));
+                        list.remove(i);
+
+                        AvgCoordinateAdapter adapter = new AvgCoordinateAdapter(activity, R.layout.average_adapter_view, list);
+                        lv.setAdapter(adapter);
+
+
+                    }
+                });
+
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        // Do nothing
+                    }
+                });
+
+                builder.show();
 
                 return true;
             }

@@ -18,7 +18,7 @@ public class CoordinatesDatabase extends SQLiteOpenHelper {
     private static final String CLASS_NAME = "CoordinatesDatabase";
 
     // Database initialization
-    private static final int DB_VERSION = 2;
+    private static final int DB_VERSION = 3;
     private static final String DB_NAME = "Coordinates.db";
 
     // Columns
@@ -26,6 +26,8 @@ public class CoordinatesDatabase extends SQLiteOpenHelper {
     public static final String POINT = "Point";             // ID for the Point - Will be useful for averaging
     public static final String LATITUDE = "Latitude";       // Latitude
     public static final String LONGITUDE = "Longitude";     // Longitude
+    public static final String POINT_TYPE = "Type";         // Point Type (point, 3-way, 4-way, other)
+    public static final String LANDMARK = "Landmark";       // Landmark
     public static final String DATE = "RecordDate";
 
     // Table Name
@@ -40,13 +42,15 @@ public class CoordinatesDatabase extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
 
-        // Create table with the following columns: ID, POINT, DATE, LATITUDE, LONGITUDE
+        // Create table with the following columns: ID, POINT, DATE, LATITUDE, LONGITUDE, POINT_TYPE, LANDMARK
         final String SQL = "CREATE TABLE " + TABLE_NAME + "(" +
                 ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                 POINT + " INTEGER," +
                 DATE + " TINYTEXT," +
                 LATITUDE + " DOUBLE," +
-                LONGITUDE + " DOUBLE" +
+                LONGITUDE + " DOUBLE," +
+                POINT_TYPE + " TINYTEXT," +
+                LANDMARK + " TINYTEXT" +
                 ")";
 
         db.execSQL(SQL);
@@ -67,7 +71,6 @@ public class CoordinatesDatabase extends SQLiteOpenHelper {
     }
 
     // METHODS
-
     /**
      * Adds GPS coordinates to the database. There may be multiple coordinates with the same point, which
      * will be used later on for calculating averages and outliers.
@@ -75,7 +78,7 @@ public class CoordinatesDatabase extends SQLiteOpenHelper {
      * @param latitude Latitude of the device
      * @param longitude Longitude of the device
      */
-    public void addNewCoordinates(long point, double latitude, double longitude) {
+    public void addNewCoordinates(long point, double latitude, double longitude, String pointType, String landmark) {
 
         ContentValues cv = new ContentValues();
         SQLiteDatabase db = this.getWritableDatabase();
@@ -87,6 +90,8 @@ public class CoordinatesDatabase extends SQLiteOpenHelper {
         cv.put(LATITUDE, latitude);
         cv.put(LONGITUDE, longitude);
         cv.put(DATE, df.format(dayAndTime.getTime()));
+        cv.put(POINT_TYPE, pointType);
+        cv.put(LANDMARK, landmark);
 
         db.insert(TABLE_NAME, null, cv);
 
@@ -126,7 +131,7 @@ public class CoordinatesDatabase extends SQLiteOpenHelper {
 
         SQLiteDatabase db = this.getReadableDatabase();
 
-        String SQL = "SELECT " + ID + ", " + LATITUDE + ", " + LONGITUDE +
+        String SQL = "SELECT " + ID + ", " + LATITUDE + ", " + LONGITUDE + ", " + POINT_TYPE + ", " + LANDMARK +
                 " FROM " + TABLE_NAME +
                 " WHERE " + POINT + " = " + point;
 
@@ -136,7 +141,7 @@ public class CoordinatesDatabase extends SQLiteOpenHelper {
         cursor.moveToFirst();
 
         for(int i = 0; i < count; i++) {
-            coordinates.add(new Coordinate(cursor.getInt(0), cursor.getDouble(1), cursor.getDouble(2)));
+            coordinates.add(new Coordinate(cursor.getInt(0), cursor.getDouble(1), cursor.getDouble(2), cursor.getString(3), cursor.getString(4)));
             cursor.moveToNext();
         }
 
@@ -224,7 +229,7 @@ public class CoordinatesDatabase extends SQLiteOpenHelper {
 
     public ArrayList<Coordinate> getAllPoints() {
         SQLiteDatabase db = this.getReadableDatabase();
-        String SQL = "SELECT " + ID + ", " + LATITUDE + ", " + LONGITUDE +
+        String SQL = "SELECT " + ID + ", " + LATITUDE + ", " + LONGITUDE + ", " + POINT_TYPE + ", " + LANDMARK +
                 " FROM " + TABLE_NAME;
 
         ArrayList<Coordinate> coordinates = new ArrayList<>();
@@ -234,7 +239,7 @@ public class CoordinatesDatabase extends SQLiteOpenHelper {
         int size = cursor.getCount();
 
         for (int i = 0; i < size; i++) {
-            coordinates.add(new Coordinate(cursor.getInt(0), cursor.getDouble(1), cursor.getDouble(2)));
+            coordinates.add(new Coordinate(cursor.getInt(0), cursor.getDouble(1), cursor.getDouble(2), cursor.getString(3), cursor.getString(4)));
             cursor.moveToNext();
         }
 
@@ -242,6 +247,84 @@ public class CoordinatesDatabase extends SQLiteOpenHelper {
         db.close();
 
         return coordinates;
+    }
+
+    public ArrayList<String> getPointType() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String SQL = "SELECT " + POINT_TYPE +
+                " FROM " + TABLE_NAME;
+
+        ArrayList<String> pointTypes = new ArrayList<>();
+
+        Cursor cursor = db.rawQuery(SQL, null);
+        cursor.moveToFirst();
+        int size = cursor.getCount();
+        for(int i = 0; i < size; i++) {
+            pointTypes.add(cursor.getString(3));
+            cursor.moveToNext();
+        }
+
+        cursor.close();
+        db.close();
+
+        return pointTypes;
+    }
+
+    public ArrayList<String> getLandmark() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String SQL = "SELECT " + LANDMARK +
+                " FROM " + TABLE_NAME;
+
+        ArrayList<String> landmarks = new ArrayList<>();
+
+        Cursor cursor = db.rawQuery(SQL, null);
+        cursor.moveToFirst();
+        int size = cursor.getCount();
+        for(int i = 0; i < size; i++) {
+            landmarks.add(cursor.getString(4));
+            cursor.moveToNext();
+        }
+
+        cursor.close();
+        db.close();
+
+        return landmarks;
+    }
+
+    public String getPointTypeAtPoint(long point) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String SQL = "SELECT " + POINT_TYPE +
+                " FROM " + TABLE_NAME +
+                " WHERE " + POINT + " = " + point;
+
+
+
+        Cursor cursor = db.rawQuery(SQL, null);
+        cursor.moveToFirst();
+
+        String type = cursor.getString(0);
+
+        cursor.close();
+        db.close();
+
+        return type;
+    }
+
+    public String getLandmarkAtPoint(long point) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String SQL = "SELECT " + LANDMARK +
+                " FROM " + TABLE_NAME +
+                " WHERE " + POINT + " = " + point;
+
+
+        Cursor cursor = db.rawQuery(SQL, null);
+        cursor.moveToFirst();
+        String landmark = cursor.getString(0);
+
+        cursor.close();
+        db.close();
+
+        return landmark;
     }
 
 
@@ -263,6 +346,14 @@ public class CoordinatesDatabase extends SQLiteOpenHelper {
 
         db.close();
 
+    }
+
+    public void deletePoint(long point) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        db.execSQL("DELETE FROM " + TABLE_NAME + " WHERE " + POINT + " = " + point);
+
+        db.close();
     }
 
 

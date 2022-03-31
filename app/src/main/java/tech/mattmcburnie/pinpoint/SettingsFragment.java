@@ -48,8 +48,11 @@ public class SettingsFragment extends Fragment {
     Button deleteButton;
     SharedPreferences prefs;
     SwitchCompat darkMode;
+    SwitchCompat recordingMode;
+    TextView recordingLabel;
 
     boolean darkModeEnabled = false;
+    boolean rMode = false;
 
     @Nullable
     @org.jetbrains.annotations.Nullable
@@ -71,6 +74,8 @@ public class SettingsFragment extends Fragment {
         exportAllButton = view.findViewById(R.id.export_all_button);
         deleteButton = view.findViewById(R.id.delete_button);
         darkMode = view.findViewById(R.id.dark_mode_switch);
+        recordingMode = view.findViewById(R.id.mode_switch);
+        recordingLabel = view.findViewById(R.id.recording_mode_label);
 
         // Get the number of points to record
         prefs = activity.getPreferences(Context.MODE_PRIVATE);
@@ -83,7 +88,12 @@ public class SettingsFragment extends Fragment {
         darkModeEnabled = prefs.getBoolean("DarkMode", true);
         darkMode.setChecked(darkModeEnabled);
 
-
+        rMode = activity.getMode();
+        recordingMode.setChecked(rMode);
+        if(rMode)
+            recordingLabel.setText("Continuous");
+        else
+            recordingLabel.setText("Set Amount");
 
         this.initializeListeners();
 
@@ -132,8 +142,9 @@ public class SettingsFragment extends Fragment {
                 ArrayList<Long> points = db.getPoints();
 
                 StringBuilder output = new StringBuilder();
-                output.append("Point,Average Latitude,Average Longitude\n");
+                output.append("Point,Average Latitude,Average Longitude,Point Type,Landmark\n");
                 double[] coordinates;
+
 
                 for(long i : points) {
                     coordinates = db.getAvgCoordsAtPoint(i);
@@ -201,12 +212,12 @@ public class SettingsFragment extends Fragment {
 
                 CoordinatesDatabase db = new CoordinatesDatabase(activity);
                 StringBuilder output = new StringBuilder();
-                output.append("ID,Latitude,Longitude\n");
+                output.append("ID,Latitude,Longitude,Point Type,Landmark\n");
 
                 ArrayList<Coordinate> allPoints = db.getAllPoints();
 
                 for(Coordinate x : allPoints) {
-                    output.append(String.format(Locale.CANADA, "%s,%.8f,%.8f\n", x.getId(), x.getLatitude(), x.getLongitude()));
+                    output.append(String.format(Locale.CANADA, "%s,%.8f,%.8f,%s,%s\n", x.getId(), x.getLatitude(), x.getLongitude(), x.getPointType(), x.getLandmark()));
                 }
 
                 File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
@@ -240,10 +251,33 @@ public class SettingsFragment extends Fragment {
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
                 }
 
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putBoolean("DarkMode", b);
+                editor.apply();
+
                 // Refreshes the current fragment
                 activity.getSupportFragmentManager().beginTransaction().detach(SettingsFragment.this);
                 activity.getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new SettingsFragment());
 
+            }
+        });
+
+
+
+        // Recording Mode
+        recordingMode.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if(b)
+                    recordingLabel.setText("Continuous");
+                else
+                    recordingLabel.setText("Set Amount");
+
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putBoolean("RecordingMode", b);
+                editor.apply();
+
+                activity.setMode(b);
             }
         });
 

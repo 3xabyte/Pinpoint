@@ -31,8 +31,10 @@ public class AvgCoordinateAdapter extends ArrayAdapter<AvgCoordinates> {
         long point = getItem(position).getPoint();
         String coords = getItem(position).getCoordinates();
         String date = getItem(position).getDate();
+        String type = getItem(position).getType();
+        String landmark = getItem(position).getLandmark();
 
-        AvgCoordinates coordinates = new AvgCoordinates(point, coords, date);
+        AvgCoordinates coordinates = new AvgCoordinates(point, coords, date, type, landmark);
 
         LayoutInflater inflater = LayoutInflater.from(this.context);
         convertView = inflater.inflate(this.resource, parent, false);
@@ -41,7 +43,10 @@ public class AvgCoordinateAdapter extends ArrayAdapter<AvgCoordinates> {
         TextView latlong = (TextView) convertView.findViewById(R.id.coordinates);
         TextView dayAndTime = (TextView) convertView.findViewById(R.id.date);
 
-        pt.setText(String.format(Locale.CANADA, "Point %s", point));
+        if(!landmark.equals("N/A"))
+            pt.setText(String.format(Locale.CANADA, "Point %s (%s)", landmark, type));
+        else
+            pt.setText(String.format(Locale.CANADA, "Point %s (%s)", point, type));
         latlong.setText(coords);
         dayAndTime.setText(date);
 

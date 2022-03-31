@@ -33,8 +33,10 @@ public class CoordinateAdapter extends ArrayAdapter<Coordinate> {
         int id = getItem(position).getId();
         double latitude = getItem(position).getLatitude();
         double longitude = getItem(position).getLongitude();
+        String pointType = getItem(position).getPointType();
+        String landmark = getItem(position).getLandmark();
 
-        Coordinate c = new Coordinate(id, latitude, longitude);
+        Coordinate c = new Coordinate(id, latitude, longitude, pointType, landmark);
 
         LayoutInflater inflater = LayoutInflater.from(this.context);
         convertView = inflater.inflate(this.resource, parent, false);
@@ -43,7 +45,11 @@ public class CoordinateAdapter extends ArrayAdapter<Coordinate> {
         TextView latLabel = (TextView) convertView.findViewById(R.id.latitude);
         TextView longLabel = (TextView) convertView.findViewById(R.id.longitude);
 
-        idLabel.setText(String.format(Locale.CANADA, "%d", id));
+        if(!landmark.equals("N/A"))
+            idLabel.setText(String.format(Locale.CANADA, "%s (%s)", landmark, pointType));
+        else
+            idLabel.setText(String.format(Locale.CANADA, "%d (%s)", id, pointType));
+
         latLabel.setText(String.format(Locale.CANADA, "%.8f", latitude));
         longLabel.setText(String.format(Locale.CANADA, "%.8f", longitude));
 

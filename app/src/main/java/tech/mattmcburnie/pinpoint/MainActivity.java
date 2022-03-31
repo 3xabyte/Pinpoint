@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MainActivity extends AppCompatActivity {
 
+    private boolean mode;
     private int maxPoints;
     private int selectedAvgPoint;
 
@@ -59,7 +60,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
-        maxPoints = this.convertMaxPoints(prefs.getInt("PointsRecorded", 0));
+        this.maxPoints = this.convertMaxPoints(prefs.getInt("PointsRecorded", 0));
+        this.mode = prefs.getBoolean("RecordingMode", true);
 
         BottomNavigationView navBar = findViewById(R.id.bottom_nav_bar);
         navBar.setOnNavigationItemSelectedListener(navBarListener);
@@ -78,6 +80,14 @@ public class MainActivity extends AppCompatActivity {
 
     public void setMaxPoints(int points) {
         this.maxPoints = points;
+    }
+
+    public void setMode(boolean b) {
+        this.mode = b;
+    }
+
+    public boolean getMode() {
+        return this.mode;
     }
 
     public int getMaxPoints() {
